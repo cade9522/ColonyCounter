@@ -34,31 +34,35 @@ function DashboardController(ImageFactory, $state){
     // to the server to apply the CV algorithm to. If a result is received,
     // route the application to the results page.
     function submitImage() {
-        // Check valid file type
-        var fileExtension = ImageFactory.getFileExtension(vm.file[0].name);
-        if (!arrayContainsAnElement([fileExtension], validFiletypes)) {
-            alert('Invalid file type! Must be of type .png or .jpg');
-            return;
+        // Check valid file types
+        for ( var i = 0; i < vm.file.length; i++ ) {
+            var fileExtension = ImageFactory.getFileExtension(vm.file[i].name);
+            if (!arrayContainsAnElement([fileExtension], validFiletypes)) {
+                alert('Invalid file type! Files must be of type .png or .jpg');
+                return;
+            }
         }
         vm.showProgress = true;
         // ImageFactory.encodeImage makes a POST request with the image and 
         // receives back a colony count.
-        ImageFactory.encodeImage(vm.file[0], function(request, img64) {
-            request.then(
-                function(success) {     
-                    vm.showProgress = false;
-                    ImageFactory.results.push({
-                        image: img64,
-                        count: success.data.colonyCount,
-                        name: vm.file[0].name
+        for ( i = 0; i < vm.file.length; i++ ) {
+            ImageFactory.encodeImage(vm.file[i], function (request, img64) {
+                request.then(
+                    function (success) {
+                        vm.showProgress = false;
+                        ImageFactory.results.push({
+                            image: img64,
+                            count: success.data.colonyCount,
+                            name: vm.file[i].name
+                        });
+                        $state.go('site.result');
+                    },
+                    function (error) {
+                        vm.showProgress = false;
+                        alert("There was an error processing your image, please try submitting it again!");
                     });
-                    $state.go('site.result');
-                },
-                function(error) {
-                    vm.showProgress = false;
-                    alert("There was an error processing your image, please try submitting it again!");
-                });
-        });
+            });
+        }
         
     }
 
